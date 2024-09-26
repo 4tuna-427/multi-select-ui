@@ -57,6 +57,7 @@ export default class MultiSelectUI {
         const createCheckbox = (node, itemIndex) => {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
+            checkbox.name = node.dataset.name;
             checkbox.value = node.value;
             checkbox.dataset.index = itemIndex;
             if ('selected' in node.dataset) {
@@ -136,6 +137,7 @@ export default class MultiSelectUI {
         const multiSelect = document.createElement('div');
         multiSelect.id = this.originalElement.id;
         multiSelect.classList.add('multi-select');
+
         this.originalElement.classList.forEach(className => {
             multiSelect.classList.add(className);
         });

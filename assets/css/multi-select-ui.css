@@ -9,7 +9,7 @@
         flex-wrap: nowrap;
         padding: 8px;
         background-color: #fff;
-        border: 1px solid #ccc;
+        border: 1px solid #aaa;
         border-radius: 4px;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
@@ -71,8 +71,8 @@
             top: 50%;
             width: 5px;
             height: 5px;
-            border-right: 2px solid #999;
-            border-bottom: 2px solid #999;
+            border-right: 2px solid #777;
+            border-bottom: 2px solid #777;
             transform: rotate(45deg);
             translate: -50% -80%;
             user-select: none;
@@ -130,8 +130,7 @@
         top: 100%;
         margin-top: 6px;
         background-color: #fff;
-        border: 1px solid #bbb;
-        /* border: 2px solid #000; */
+        border: 1px solid #aaa;
         border-radius: 4px;
 
         .search-container {
@@ -140,17 +139,17 @@
             align-items: center;
             gap: 6px;
             padding: 6px;
-            border-bottom: 1px solid #bbb;
+            border-bottom: 1px solid #aaa;
         }
 
         .search-input {
             width: 100%;
             padding: 6px;
-            border: 1px solid #bbb;
+            border: 1px solid #aaa;
             border-radius: 3px;
 
             &::placeholder {
-                color: #bbb;
+                color: #aaa;
                 user-select: none;
             }
         }
@@ -179,7 +178,7 @@
         .dropdown-list {
             display: flex;
             flex-direction: column;
-            padding: 6px 0;
+            resize: both;
             overflow: auto;
 
             .item {
@@ -188,6 +187,7 @@
                 align-items: center;
                 gap: 8px;
                 padding: 4px 8px;
+                white-space: nowrap;
                 cursor: pointer;
                 user-select: none;
 
@@ -196,6 +196,31 @@
                         background-color: #eee;
                     }
                 }
+            }
+
+            .optgroup-container {
+                .optgroup-label {
+                    padding: 4px 8px;
+                    font-weight: bold;
+                    white-space: nowrap;
+                    cursor: pointer;
+                    user-select: none;
+
+                    @media (hover: hover) {
+                        &:hover {
+                            background-color: #eee;
+                        }
+                    }
+                }
+
+                .item {
+                    padding-left: 20px;
+                }
+            }
+
+            hr {
+                border: 0;
+                border-top: 1px solid #aaa;
             }
         }
     }

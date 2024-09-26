@@ -22,6 +22,7 @@ export default class MultiSelectUI {
         const multiSelectInstance = new MultiSelectUI(targetElement);
         multiSelectInstance.convertToMultiSelect();
         multiSelectInstance.setupEventListeners();
+        multiSelectInstance.initializeElementSize();
     }
 
     /**
@@ -31,63 +32,100 @@ export default class MultiSelectUI {
      */
     constructor(targetElement) {
         this.originalElement = targetElement;
-        this.selectedItems = [];
-        this.isDropdownMenuVisible = false;
+
+        // イベントハンドラー
         this.documentClickHandler = null;
         this.adjustDropdownSizeHandler = null;
+
+        // ドロップダウンの表示状態フラグ
+        this.isDropdownMenuVisible = false;
+        // 選択中のドロップダウンリスト項目
+        this.selectedItems = [];
+
+        this.dropDownListMinWidth = null;
     }
 
     /**
      * 指定した既存のselect要素をマルチセレクト要素に変形する
      */
     convertToMultiSelect() {
-        // オリジナルのoption要素からマルチセレクト要素の項目を生成する
-        const listItems = [];
-        const originalOptions = Array.from(this.originalElement.options);
-
-        for (let i = 0; i < originalOptions.length; i++) {
-            const option = originalOptions[i];
-
-            const text = option.textContent;
-            const isSelected = 'selected' in option.dataset;
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = option.value;
-            checkbox.dataset.index = i;
-            if (isSelected) {
-                checkbox.checked = true;
-            }
-
-            const label = document.createElement('label');
-            label.classList.add('item');
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(option.text));
-
-            listItems.push({
-                label: label,
-                index: i,
-                text: text,
-                isSelected: isSelected
-            });
-        }
-
-        // マルチセレクト要素Elementを生成する
         this.multiSelectElement = this.createMultiSelectElement();
 
-        // マルチセレクト要素の項目を追加する
-        const dropdownList = this.multiSelectElement.querySelector(`[data-id="dropdown-list"]`);
-        listItems.forEach(listItem => {
-            dropdownList.appendChild(listItem.label);
+        let itemIndex = 0;
+        const selectedOptions = [];
 
-            if (listItem.isSelected) {
-                this.addTagElement(listItem.text, listItem.index);
+        const createCheckbox = (node, itemIndex) => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = node.value;
+            checkbox.dataset.index = itemIndex;
+            if ('selected' in node.dataset) {
+                checkbox.checked = true;
+                selectedOptions.push({
+                    index: itemIndex,
+                    text: node.textContent
+                });
             }
+            return checkbox;
+        };
+
+        const createItemElement = (checkbox, text) => {
+            const itemElement = document.createElement('label');
+            itemElement.classList.add('item');
+            itemElement.appendChild(checkbox);
+            itemElement.appendChild(document.createTextNode(text));
+            return itemElement;
+        };
+
+        const toggleCheckboxes = (groupContainer) => {
+            const checkboxes = groupContainer.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => {
+                if (allChecked || !checkbox.checked) {
+                    checkbox.click();
+                }
+            });
+        };
+
+        const processNode = (node, parentList) => {
+            switch (node.nodeName) {
+                case 'OPTION':
+                    const checkbox = createCheckbox(node, itemIndex);
+                    const itemElement = createItemElement(checkbox, node.textContent);
+                    parentList.appendChild(itemElement);
+                    itemIndex++;
+                    break;
+                case 'OPTGROUP':
+                    const groupContainer = document.createElement('div');
+                    groupContainer.classList.add('optgroup-container');
+
+                    const groupLabel = document.createElement('div');
+                    groupLabel.dataset.type = 'optgroup-label';
+                    groupLabel.classList.add('optgroup-label');
+                    groupLabel.textContent = node.label;
+                    groupLabel.addEventListener('click', () => toggleCheckboxes(groupContainer));
+
+                    groupContainer.appendChild(groupLabel);
+                    Array.from(node.children).forEach(child => processNode(child, groupContainer));
+                    parentList.appendChild(groupContainer);
+                    break;
+                case 'HR':
+                    parentList.appendChild(document.createElement('hr'));
+                    break;
+            }
+        };
+
+        Array.from(this.originalElement.childNodes).forEach(node => {
+            processNode(node, this.dropdownList);
         });
 
-        // オリジナルのselect要素の位置にマルチセレクト要素を生成し、オリジナル要素を削除する
         this.originalElement.insertAdjacentElement('afterend', this.multiSelectElement);
         this.originalElement.remove();
+
+        // 選択中リストアイテムのタグを追加
+        selectedOptions.forEach(item => {
+            this.addTagElement(item.text, item.index);
+        });
     }
 
     /**
@@ -175,6 +213,27 @@ export default class MultiSelectUI {
     }
 
     /**
+     * マルチセレクト要素の初期サイズを設定
+     */
+    initializeElementSize() {
+        // ドロップダウンメニューを透明で表示
+        this.dropdownMenu.style.display = '';
+        this.dropdownMenu.style.visibility = 'hidden';
+        this.dropdownMenu.style.position = 'absolute';
+
+        // ドロップダウンリストに最小横幅を設定
+        if (this.dropDownListMinWidth === null) {
+            this.dropDownListMinWidth = this.getRequiredWidth(this.dropdownList);
+            this.dropdownList.style.minWidth = this.dropDownListMinWidth + 'px';
+        }
+
+        // ドロップダウンメニューを非表示に戻す
+        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.style.visibility = '';
+        this.dropdownMenu.style.position = '';
+    }
+
+    /**
      * ドロップダウンが画面からはみ出さないように調整
      */
     adjustDropdownSizeToFitViewport() {
@@ -182,10 +241,10 @@ export default class MultiSelectUI {
         const documentScrollbarSize = this.getDocumentScrollbarSize();
 
         const maxWidth = window.innerWidth - Math.ceil(rect.left) - documentScrollbarSize.width - 2;
-        this.dropdownList.style.maxWidth = `${maxWidth}px`;
+        this.dropdownList.style.maxWidth = maxWidth + 'px';
 
-        const newHeight = window.innerHeight - Math.ceil(rect.top) - documentScrollbarSize.height - 2;
-        this.dropdownList.style.maxHeight = `${newHeight}px`;
+        const height = window.innerHeight - Math.ceil(rect.top) - documentScrollbarSize.height - 2;
+        this.dropdownList.style.height = height + 'px';
     }
 
     /**
@@ -216,6 +275,32 @@ export default class MultiSelectUI {
             width: scrollbarWidth,
             height: scrollbarHeight
         };
+    }
+
+    /**
+     * 引数で指定した要素のスクロールバーが出ない程度の横幅を取得する
+     *
+     * @param {*} element
+     * @returns
+     */
+    getRequiredWidth(element) {
+        // コンテンツの総幅を取得
+        const scrollWidth = element.scrollWidth;
+
+        // パディングとボーダーを考慮
+        const style = window.getComputedStyle(element);
+        const paddingLeft = parseFloat(style.paddingLeft);
+        const paddingRight = parseFloat(style.paddingRight);
+        const borderLeft = parseFloat(style.borderLeftWidth);
+        const borderRight = parseFloat(style.borderRightWidth);
+
+        // ブラウザのスクロールバーのサイズを取得
+        const documentScrollbarSize = this.getDocumentScrollbarSize();
+
+        // スクロールバーがでない程度の横幅
+        const requiredWidth = scrollWidth + paddingLeft + paddingRight + borderLeft + borderRight + documentScrollbarSize.width;
+
+        return requiredWidth;
     }
 
     /**
@@ -299,7 +384,6 @@ export default class MultiSelectUI {
         // ブラウザサイズ変更時
         this.adjustDropdownSizeHandler = this.adjustDropdownSizeToFitViewport.bind(this);
         window.addEventListener('resize', this.adjustDropdownSizeHandler);
-        window.addEventListener('scroll', this.adjustDropdownSizeHandler);
 
         this.isDropdownMenuVisible = true;
     }
@@ -318,7 +402,6 @@ export default class MultiSelectUI {
         // イベントリスナを解除
         document.removeEventListener('click', this.documentClickHandler);
         window.removeEventListener('resize', this.adjustDropdownSizeHandler);
-        window.removeEventListener('scroll', this.adjustDropdownSizeHandler);
 
         this.isDropdownMenuVisible = false;
     }

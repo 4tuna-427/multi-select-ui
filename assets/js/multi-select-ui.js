@@ -42,26 +42,48 @@ export default class MultiSelectUI {
      */
     convertToMultiSelect() {
         // オリジナルのoption要素からマルチセレクト要素の項目を生成する
-        const optionLabels = Array.from(this.originalElement.options).map((option, index) => {
+        const listItems = [];
+        const originalOptions = Array.from(this.originalElement.options);
+
+        for (let i = 0; i < originalOptions.length; i++) {
+            const option = originalOptions[i];
+
+            const text = option.textContent;
+            const isSelected = 'selected' in option.dataset;
+
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = option.value;
-            checkbox.dataset.index = index;
+            checkbox.dataset.index = i;
+            if (isSelected) {
+                checkbox.checked = true;
+            }
 
             const label = document.createElement('label');
             label.classList.add('item');
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(option.text));
 
-            return label;
-        });
+            listItems.push({
+                label: label,
+                index: i,
+                text: text,
+                isSelected: isSelected
+            });
+        }
 
         // マルチセレクト要素Elementを生成する
         this.multiSelectElement = this.createMultiSelectElement();
 
         // マルチセレクト要素の項目を追加する
         const dropdownList = this.multiSelectElement.querySelector(`[data-id="dropdown-list"]`);
-        optionLabels.forEach(label => dropdownList.appendChild(label));
+        listItems.forEach(listItem => {
+            dropdownList.appendChild(listItem.label);
+
+            if (listItem.isSelected) {
+                this.addTagElement(listItem.text, listItem.index);
+            }
+        });
 
         // オリジナルのselect要素の位置にマルチセレクト要素を生成し、オリジナル要素を削除する
         this.originalElement.insertAdjacentElement('afterend', this.multiSelectElement);
@@ -343,12 +365,12 @@ export default class MultiSelectUI {
      * 項目のチェックボックスの状態を変更時、その値の表示を切り替える
      */
     handleCheckboxToggle(e) {
-        const itemIndex = e.target.dataset.index;
-        const selectedItem = this.selectedItemsContainer.querySelector(`[data-index="${itemIndex}"]`);
+        const itemIndex = parseInt(e.target.dataset.index);
+        const text = e.target.parentElement.textContent;
 
-        if (e.target.checked && !selectedItem) {
-            this.addTagElement(e.target.value, itemIndex);
-        } else if (!e.target.checked && selectedItem) {
+        if (e.target.checked) {
+            this.addTagElement(text, itemIndex);
+        } else if (!e.target.checked) {
             this.removeTagElement(itemIndex);
         }
 
@@ -364,7 +386,7 @@ export default class MultiSelectUI {
 
         const tagElement = this.createTagElement(text, index);
         this.selectedItems.push({
-            index: index,
+            index: parseInt(index),
             element: tagElement,
         });
         this.selectedItemsContainer.appendChild(tagElement);
@@ -393,25 +415,19 @@ export default class MultiSelectUI {
         tagElement.classList.add('tag');
         tagElement.innerHTML = `<span>${text}</span><span data-id="close-btn" class="close-btn" tabindex="0">&times;</span>`;
 
+        const checkbox = this.multiSelectElement.querySelector(`input[data-index="${index}"]`);
         const closeButton = tagElement.querySelector(`[data-id="close-btn"]`);
 
         // 閉じるボタンクリック時、対応するチェックボックスをトグル（タグ要素削除イベントが発火する）
         closeButton.addEventListener('click', () => {
-            const checkbox = this.multiSelectElement.querySelector(`input[data-index="${index}"]`);
-            checkbox.checked = false;
-            this.handleCheckboxToggle({ target: checkbox });
+            checkbox.click();
         });
 
         closeButton.addEventListener('keydown', (e) => {
             if ([' ', 'Enter', ''].includes(e.key)) {
                 e.preventDefault();
-                e.target.click();
+                checkbox.click();
             }
-        });
-
-        // タグをダブルクリック時、〃
-        tagElement.addEventListener('dblclick', () => {
-            closeButton.click();
         });
 
         return tagElement;

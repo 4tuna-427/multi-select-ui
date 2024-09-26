@@ -1,0 +1,202 @@
+@charset "UTF-8";
+
+.multi-select {
+    position: relative;
+    display: flex;
+
+    .multi-select-box {
+        display: flex;
+        flex-wrap: nowrap;
+        padding: 8px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        .box-left {
+            flex-grow: 1;
+
+            &::before {
+                /* tagクラス */
+                position: relative;
+                padding: 1px 6px 1px 26px;
+                background-color: #E2E6E9;
+                border: 1px solid #E2E6E9;
+                border-radius: 4px;
+                white-space: nowrap;
+
+                /* 高さのみを利用したいため、横幅を削除 */
+                content: "\00a0";
+                display: inline-block;
+                width: 0;
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 0;
+                padding-right: 0;
+                border-left: none;
+                border-right: none;
+                visibility: hidden;
+            }
+        }
+
+        .box-right {
+            display: flex;
+            margin-left: 12px;
+        }
+
+        &.focus {
+            outline: -webkit-focus-ring-color auto 1px;
+        }
+    }
+
+    .placeholder {
+        display: inline-block;
+        color: #aaa;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .dropdown-icon {
+        position: relative;
+        align-self: center;
+        width: 12px;
+        height: 12px;
+        padding: 8px;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 5px;
+            height: 5px;
+            border-right: 2px solid #999;
+            border-bottom: 2px solid #999;
+            transform: rotate(45deg);
+            translate: -50% -80%;
+            user-select: none;
+        }
+
+        @media (hover: hover) {
+            &:hover::after {
+                border-color: #f00;
+            }
+        }
+    }
+
+    .selected-items-container {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .tag {
+            position: relative;
+            padding: 1px 6px 1px 26px;
+            background-color: #E2E6E9;
+            border: 1px solid #E2E6E9;
+            border-radius: 4px;
+            user-select: none;
+
+            .close-btn {
+                position: absolute;
+                top: 50%;
+                left: 6px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                translate: 0 -50%;
+                width: 12px;
+                height: 12px;
+                padding: 8px;
+                cursor: pointer;
+                color: #555;
+                font-weight: bold;
+                text-align: center;
+                user-select: none;
+
+                @media (hover: hover) {
+                    &:hover {
+                        color: #f00;
+                    }
+                }
+            }
+        }
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        left: 0;
+        top: 100%;
+        margin-top: 6px;
+        background-color: #fff;
+        border: 1px solid #bbb;
+        /* border: 2px solid #000; */
+        border-radius: 4px;
+
+        .search-container {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border-bottom: 1px solid #bbb;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #bbb;
+            border-radius: 3px;
+
+            &::placeholder {
+                color: #bbb;
+                user-select: none;
+            }
+        }
+
+        .menu-closer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+
+            &::before {
+                content: '×';
+                font-size: 20px;
+                color: #000;
+            }
+
+            @media (hover: hover) {
+                &:hover::before {
+                    color: #f00;
+                }
+            }
+        }
+
+        .dropdown-list {
+            display: flex;
+            flex-direction: column;
+            padding: 6px 0;
+            overflow: auto;
+
+            .item {
+                display: flex;
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 8px;
+                padding: 4px 8px;
+                cursor: pointer;
+                user-select: none;
+
+                @media (hover: hover) {
+                    &:hover {
+                        background-color: #eee;
+                    }
+                }
+            }
+        }
+    }
+}

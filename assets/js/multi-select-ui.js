@@ -238,15 +238,21 @@ export default class MultiSelectUI {
     /**
      * ドロップダウンが画面からはみ出さないように調整
      */
-    adjustDropdownSizeToFitViewport() {
+    adjustDropdownSize() {
+        this.dropdownList.style.height = '';
+
         const rect = this.dropdownList.getBoundingClientRect();
         const documentScrollbarSize = this.getDocumentScrollbarSize();
+
+        const suggestionHeight = this.dropdownList.scrollHeight;
 
         const maxWidth = window.innerWidth - Math.ceil(rect.left) - documentScrollbarSize.width - 2;
         this.dropdownList.style.maxWidth = maxWidth + 'px';
 
-        const height = window.innerHeight - Math.ceil(rect.top) - documentScrollbarSize.height - 2;
-        this.dropdownList.style.height = height + 'px';
+        const newHeight = window.innerHeight - Math.ceil(rect.top) - documentScrollbarSize.height - 2;
+        if (newHeight < suggestionHeight) {
+            this.dropdownList.style.height = newHeight + 'px';
+        }
     }
 
     /**
@@ -377,14 +383,14 @@ export default class MultiSelectUI {
         this.multiSelectBox.classList.add('focus');
 
         // ドロップダウンメニューが画面からはみ出さないように調整
-        this.adjustDropdownSizeToFitViewport();
+        this.adjustDropdownSize();
 
         // ドロップダウンメニューを非表示にするイベントリスナを設定
         this.documentClickHandler = this.handleDocumentClick.bind(this);
         document.addEventListener('click', this.documentClickHandler);
 
         // ブラウザサイズ変更時
-        this.adjustDropdownSizeHandler = this.adjustDropdownSizeToFitViewport.bind(this);
+        this.adjustDropdownSizeHandler = this.adjustDropdownSize.bind(this);
         window.addEventListener('resize', this.adjustDropdownSizeHandler);
 
         this.isDropdownMenuVisible = true;
@@ -414,9 +420,8 @@ export default class MultiSelectUI {
     handleDocumentClick(e) {
         // ドロップダウンメニューを非表示にする条件
         const shouldHideMenu = (
-            // !e.target.closest('#' + this.multiSelectElement.id)
-            !e.target.closest(`[data-id="dropdown-menu"]`)
-            && !e.target.closest(`[data-id="selected-items-container"]`)
+            !e.target.closest(`[data-id="dropdown-menu"]`) &&
+            !e.target.closest(`[data-id="selected-items-container"]`)
         );
 
         if (shouldHideMenu) {
@@ -437,6 +442,9 @@ export default class MultiSelectUI {
             const containsKeyword = filterKeywords.some(keyword => itemValue.includes(keyword));
             item.style.display = containsKeyword ? '' : 'none';
         });
+
+        // ドロップダウンをリサイズ
+        this.adjustDropdownSize();
     }
 
     /**
@@ -460,7 +468,7 @@ export default class MultiSelectUI {
         }
 
         // ドロップダウンをリサイズ
-        this.adjustDropdownSizeToFitViewport();
+        this.adjustDropdownSize();
     }
 
     /**
